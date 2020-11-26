@@ -4,10 +4,12 @@ import android.content.Context
 import com.example.offlineapplicationdemo.BuildConfig
 import com.example.offlineapplicationdemo.model.bean.UserDataResponse
 import com.example.offlineapplicationdemo.utility.*
+import io.reactivex.rxjava3.core.Single
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -15,13 +17,16 @@ import retrofit2.http.Query
 interface NetworkRequest {
 
     @GET("/api/users")
-    suspend fun getUserList(@Query("page") page: Int) : Response<UserDataResponse>
+    suspend fun getUserListUsingSuspend(@Query("page") page: Int): Response<UserDataResponse>
+
+    @GET("/api/users")
+    fun getUserList(@Query("page") page: Int): Single<UserDataResponse>
 
     companion object {
-        operator fun invoke(context: Context) : NetworkRequest = run {
+        operator fun invoke(context: Context): NetworkRequest = run {
             val interceptor = Interceptor {
                 val isConnected = checkNetworkConnection(context)
-                if(!isConnected) throw UnreachableNetworkException()
+                if (!isConnected) throw UnreachableNetworkException()
 
                 val request = it.request()
                 logDebug(request.method(), request.url().toString())
@@ -39,6 +44,7 @@ interface NetworkRequest {
                 .build()
 
             val retrofit: Retrofit = Retrofit.Builder()
+                .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(BuildConfig.API_BASE_URL)
                 .client(okHttpClient)

@@ -8,8 +8,13 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.offlineapplicationdemo.R
 import com.example.offlineapplicationdemo.databinding.ActivityDashboardBinding
+import com.example.offlineapplicationdemo.model.bean.UserDataResponse
+import com.example.offlineapplicationdemo.utility.logError
+import com.example.offlineapplicationdemo.utility.logInfo
 import com.example.offlineapplicationdemo.viewmodel.DashboardViewModel
 import com.example.offlineapplicationdemo.viewmodel.DashboardViewModelFactory
+import io.reactivex.rxjava3.core.SingleObserver
+import io.reactivex.rxjava3.disposables.Disposable
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.android.closestDI
@@ -31,22 +36,35 @@ class DashboardActivity : AppCompatActivity(), DIAware {
     override fun onStart() {
         super.onStart()
         requestData()
-        observeData()
     }
 
     private fun requestData() {
-        if(::dashboardViewModel.isInitialized) dashboardViewModel.getUserList(1)
+        if(::dashboardViewModel.isInitialized) dashboardViewModel.getUserList(UserListObserver(viewDataBinding))
     }
 
-    private fun observeData() {
+    private fun observeDataCoroutine() {
         if(::dashboardViewModel.isInitialized) {
             dashboardViewModel.userDataResponse.observe(this, {
+                println("Called outer observer ******************************************************")
+
                 viewDataBinding.data = it
             })
 
             dashboardViewModel.failureResponse.observe(this, {
+                logError("Error: ${it.first}", it.second)
                 Toast.makeText(this, it.second, Toast.LENGTH_SHORT).show()
             })
+        }
+    }
+
+    class UserListObserver(private val viewDataBinding: ActivityDashboardBinding) : SingleObserver<UserDataResponse> {
+        override fun onSubscribe(d: Disposable?) {}
+        override fun onError(e: Throwable?) {
+            e?.printStackTrace()
+        }
+
+        override fun onSuccess(t: UserDataResponse?) {
+            viewDataBinding.data = t
         }
     }
 }

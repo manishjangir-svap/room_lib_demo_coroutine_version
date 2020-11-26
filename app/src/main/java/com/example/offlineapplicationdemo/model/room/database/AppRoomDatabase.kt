@@ -12,13 +12,7 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 
     companion object {
-        private var instance: AppRoomDatabase? = null
-
         operator fun invoke(context: Context): AppRoomDatabase = run {
-            instance ?: synchronized(Any()) { createInstance(context).also { instance = it } }
-        }
-
-        private fun createInstance(context: Context): AppRoomDatabase = run {
             Room.databaseBuilder(context, AppRoomDatabase::class.java, "app_room_database").build()
         }
     }
