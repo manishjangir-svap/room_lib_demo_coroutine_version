@@ -25,7 +25,10 @@ class DashboardViewModel(private val dashboardRepo: DashboardRepo) : BaseViewMod
         })
     }*/
 
-    fun getUserList(observer: SingleObserver<UserDataResponse>) {
-        dashboardRepo.getUserList(observer)
+    fun getUserList() {
+        request<UserDataResponse>(
+            request = { dashboardRepo.getUserList(it) },
+            success = { _userDataResponse.postValue(it) },
+        )
     }
 }
